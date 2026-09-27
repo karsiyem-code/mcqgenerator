@@ -1,0 +1,11 @@
+{
+  "name": "test-generator-netlify",
+  "version": "1.0.0",
+  "description": "Assessment Item Generator with Gemini and Groq Failover",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "keywords": ["assessment", "cefr", "barrett-taxonomy", "gemini", "groq", "netlify"],
+  "author": "Suryo Agung Nugroho",
+  "license": "ISC"
+}

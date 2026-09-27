@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEST GENERATOR - CEFR & Barrett Alignment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            /* Palette: Biru Muda, Ungu Muda, dan Putih */
+            --sky-50: #f0f9ff;
+            --sky-100: #e0f2fe;
+            --sky-200: #bae6fd;
+            --sky-400: #38bdf8;
+            --sky-500: #0ea5e9;
+            --sky-600: #0284c7;
+
+            --purple-50: #faf5ff;
+            --purple-100: #f3e8ff;
+            --purple-200: #e9d5ff;
+            --purple-400: #c084fc;
+            --purple-500: #a855f7;
+            --purple-600: #7c3aed;
+            --purple-700: #6d28d9;
+
+            --indigo-accent: #6366f1;
+            
+            --slate-800: #1e293b;
+            --slate-600: #475569;
+            --slate-500: #64748b;
+            --slate-400: #94a3b8;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
+            
+            --card-border: #e6ebf4;
+            --shadow-subtle: 0 4px 20px -2px rgba(124, 58, 237, 0.04), 0 2px 10px -2px rgba(14, 165, 233, 0.05);
+            --shadow-card: 0 10px 30px -4px rgba(99, 102, 241, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(160deg, #f8fafc 0%, #f0f7ff 45%, #f7f3ff 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--slate-800);
+            font-size: 14.5px;
+            letter-spacing: -0.01em;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── TOPBAR GLASS ── */
+        .topbar {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 0 32px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 1px 12px rgba(99, 102, 241, 0.04);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .logo-box {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--sky-400), var(--purple-500));
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 800; color: white;
+            box-shadow: 0 3px 12px rgba(99, 102, 241, 0.3);
+            flex-shrink: 0;
+        }
+        .brand-name {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: -0.3px;
+        }
+        .brand-sub {
+            color: var(--slate-500);
+            font-size: 11.5px;
+            font-weight: 500;
+        }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600;
+            padding: 6px 14px; border-radius: 30px;
+            transition: all 0.25s ease;
+        }
+        .status-pill.connecting {
+            background: #faf5ff; color: #7e22ce;
+            border: 1px solid #e9d5ff;
+        }
+        .status-pill.ready {
+            background: #f0fdf4; color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+        .status-pill.warning {
+            background: #fffbeb; color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        .status-pill.error {
+            background: #fef2f2; color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        /* ── PAGE CONTAINER ── */
+        .page {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .page-header {
+            margin-bottom: 2px;
+            text-align: left;
+        }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11.5px; font-weight: 700;
+            color: var(--purple-600);
+            background: linear-gradient(135deg, var(--sky-100), var(--purple-100));
+            padding: 4px 12px; border-radius: 20px;
+            margin-bottom: 8px; border: 1px solid rgba(192, 132, 252, 0.25);
+        }
+        .page-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+            line-height: 1.25;
+        }
+        .page-desc {
+            font-size: 14px;
+            color: var(--slate-500);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* ── PANEL (CLEAN WHITE CARDS) ── */
+        .panel {
+            background: #ffffff;
+            border-radius: 18px;
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .panel:hover {
+            border-color: #dbe4f0;
+            box-shadow: 0 14px 36px -4px rgba(99, 102, 241, 0.08);
+        }
+        .panel-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 14px;
+            padding: 16px 22px;
+            border-bottom: 1px solid #f1f5f9;
+            background: linear-gradient(90deg, #ffffff 0%, #fafbff 100%);
+        }
+        .panel-head-left {
+            display: flex; align-items: center; gap: 14px; flex: 1;
+        }
+        .panel-ico {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--sky-100), var(--purple-100));
+            color: var(--purple-600);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+            border: 1px solid rgba(168, 85, 247, 0.15);
+        }
+        .panel-title {
+            font-size: 15px; font-weight: 700;
+            color: #0f172a; letter-spacing: -0.2px;
+        }
+        .panel-sub {
+            font-size: 12.5px; color: var(--slate-400);
+            margin-top: 1px; font-weight: 500;
+        }
+        .panel-body { padding: 22px; }
+
+        /* ── FORM ELEMENTS ── */
+        .lbl {
+            font-size: 13px; font-weight: 700; color: #334155;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .lbl-tag {
+            font-size: 11px; font-weight: 600;
+            padding: 2px 8px; border-radius: 6px;
+            background: var(--sky-50); color: var(--sky-600);
+            border: 1px solid var(--sky-200);
+        }
+        input[type="text"], textarea, select {
+            width: 100%; padding: 11px 14px;
+            border: 1.5px solid var(--slate-200); border-radius: 11px;
+            font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--slate-800); background: #ffffff; outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
+            border-color: var(--purple-400);
+            box-shadow: 0 0 0 3.5px rgba(168, 85, 247, 0.12);
+            background: #ffffff;
+        }
+        input[type="text"]::placeholder, textarea::placeholder {
+            color: #94a3b8;
+        }
+        textarea { resize: vertical; line-height: 1.7; }
+        .hint {
+            font-size: 12px; color: var(--slate-400);
+            margin-top: 6px; display: flex; align-items: center; gap: 5px;
+        }
+        .field + .field { margin-top: 20px; }
+
+        /* ── 2-COL GRID ── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        /* ── TABS MINIMALIS ── */
+        .tab-group {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 11px;
+            padding: 3px; gap: 4px;
+            margin-bottom: 16px;
+            width: fit-content;
+            border: 1px solid #e2e8f0;
+        }
+        .tab-btn {
+            display: flex; align-items: center; gap: 7px;
+            padding: 7px 18px; border-radius: 8px;
+            font-size: 13px; font-weight: 600; color: var(--slate-500);
+            cursor: pointer; transition: all 0.2s ease; user-select: none;
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--purple-600);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+        }
+
+        /* ── DROP ZONE ── */
+        .drop-zone {
+            border: 2px dashed #cbd5e1; border-radius: 14px;
+            background: linear-gradient(145deg, #f8fafc 0%, #faf5ff 100%);
+            padding: 34px 20px;
+            text-align: center; cursor: pointer;
+            transition: all 0.22s ease;
+        }
+        .drop-zone:hover {
+            border-color: var(--sky-400);
+            background: linear-gradient(145deg, #f0f9ff 0%, #faf5ff 100%);
+            transform: scale(0.998);
+        }
+        .drop-icon {
+            font-size: 32px;
+            color: var(--sky-400);
+            margin-bottom: 10px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .drop-zone:hover .drop-icon {
+            transform: translateY(-2px);
+            color: var(--purple-500);
+        }
+        .drop-zone p { font-size: 14px; color: var(--slate-600); font-weight: 500; }
+        .drop-zone strong { color: var(--purple-600); font-weight: 700; }
+        .drop-zone small {
+            font-size: 12px; color: var(--slate-400);
+            margin-top: 4px; display: block;
+        }
+
+        /* ── IMAGE PREVIEW ── */
+        .img-preview {
+            display: none; align-items: center; gap: 14px;
+            margin-top: 14px; padding: 12px 16px;
+            background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px;
+        }
+        .img-preview img {
+            height: 48px; width: 66px; object-fit: cover;
+            border-radius: 8px; border: 1px solid #86efac; flex-shrink: 0;
+        }
+        .img-preview .ok { font-size: 13px; font-weight: 700; color: #15803d; }
+        .img-preview .fn { font-size: 12px; color: #16a34a; margin-top: 2px; }
+
+        /* ── EXTRACTION BOX ── */
+        .extract-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #faf5ff 100%);
+            border: 1.5px solid #e0e7ff;
+            border-radius: 14px; padding: 16px; margin-top: 14px;
+        }
+        .extract-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .extract-label {
+            font-size: 12px; font-weight: 700; color: var(--purple-600);
+            text-transform: uppercase; letter-spacing: 0.6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .extract-status {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: var(--sky-600);
+        }
+        .extract-hint {
+            font-size: 11.5px; color: var(--slate-500); margin-top: 6px;
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        /* ── CONFIG BOX ── */
+        .cfg-box {
+            background: linear-gradient(145deg, #f8fafc 0%, #faf5ff 100%);
+            border: 1.5px solid #e6ebf5;
+            border-radius: 14px; padding: 16px;
+        }
+        .cfg-title {
+            font-size: 11px; font-weight: 800; color: var(--slate-400);
+            text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        /* ── GENERATE BUTTON ── */
+        .btn-gen {
+            width: 100%;
+            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 50%, #8b5cf6 100%);
+            color: white; font-size: 15px; font-weight: 700;
+            padding: 15px 22px; border-radius: 13px; border: none;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 9px;
+            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.32);
+            transition: all 0.22s ease; letter-spacing: 0.3px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .btn-gen:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(99, 102, 241, 0.42);
+        }
+        .btn-gen:active { transform: translateY(0); }
+        .btn-gen:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+        /* ── COPY BUTTONS ── */
+        .btn-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            padding: 7px 13px;
+            border-radius: 9px;
+            background: #ffffff;
+            border: 1.5px solid var(--slate-200);
+            color: var(--slate-600);
+            cursor: pointer;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.18s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            white-space: nowrap;
+        }
+        .btn-copy:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #0f172a;
+            transform: translateY(-1px);
+        }
+        .btn-copy-primary {
+            background: linear-gradient(135deg, var(--sky-50), var(--purple-50));
+            border-color: #c7d2fe;
+            color: var(--purple-600);
+        }
+        .btn-copy-primary:hover {
+            background: linear-gradient(135deg, var(--sky-100), var(--purple-100));
+            border-color: #a78bfa;
+            color: var(--purple-700);
+        }
+
+        /* ── LOADERS ── */
+        @keyframes rot { to { transform: rotate(360deg); } }
+        .spin { animation: rot 0.75s linear infinite; display: inline-block; }
+
+        .loading-row {
+            display: none; align-items: center; justify-content: center;
+            gap: 14px; padding: 18px 0 4px;
+        }
+        .loading-row .msg       { font-size: 14px; font-weight: 600; color: #1e293b; }
+        .loading-row .msg small { font-size: 12px; color: var(--slate-400); display: block; margin-top: 2px; }
+
+        /* ── RESULT VIEW ── */
+        .result-in { animation: slideUp 0.35s ease-out; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .bdg {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700;
+            padding: 4px 11px; border-radius: 8px;
+        }
+
+        /* ── OPTION ROWS ── */
+        .opt-row {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 13px 16px; border-radius: 12px;
+            border: 1.5px solid var(--slate-200); background: #ffffff;
+            font-size: 14.5px; color: #334155;
+            transition: all 0.18s ease;
+            user-select: text;
+        }
+        .opt-row:hover {
+            border-color: #c7d2fe;
+            background: linear-gradient(90deg, #f0f9ff, #faf5ff);
+            transform: translateX(2px);
+        }
+        .opt-lbl {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600; font-size: 13px; color: var(--purple-600);
+            background: linear-gradient(135deg, var(--sky-100), var(--purple-100));
+            min-width: 28px; height: 28px;
+            border-radius: 7px; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0; margin-top: 1px;
+            padding: 0 4px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        /* ── KEY BOX ── */
+        .key-box {
+            background: linear-gradient(145deg, #ffffff 0%, #faf5ff 100%);
+            border: 1.5px solid #d8b4fe; border-radius: 14px;
+            padding: 22px; margin-top: 18px;
+            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.06);
+            user-select: text;
+        }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 18px; border-radius: 12px;
+            font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 9px;
+            transform: translateY(70px); opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 999;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        .divider { height: 1px; background: #f1f5f9; margin: 18px 0; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="brand">
+        <div class="logo-box">Y2K</div>
+        <div>
+            <div class="brand-name">TEST GENERATOR</div>
+            <div class="brand-sub">by Suryo Agung Nugroho &bull; Minimalist Netlify Edition</div>
+        </div>
+    </div>
+    <div id="statusBadge" class="status-pill connecting">
+        <svg class="spin" width="12" height="12" viewBox="0 0 12 12">
+            <circle cx="6" cy="6" r="5" fill="none" stroke="#7e22ce" stroke-width="1.5" stroke-dasharray="8 6"/>
+        </svg>
+        Connecting Functions...
+    </div>
+</div>
+
+<div class="page">
+
+    <div class="page-header">
+        <div class="page-badge">
+            <i class="fas fa-sparkles"></i> Assessment Generator 2.0
+        </div>
+        <div class="page-title">Generate Assessment Item</div>
+        <div class="page-desc">CEFR & Barrett Taxonomy Alignment &bull; Multi-Key Gemini with Groq Fallback</div>
+    </div>
+
+    <!-- STIMULUS PANEL -->
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-head-left">
+                <div class="panel-ico"><i class="fas fa-book-open"></i></div>
+                <div>
+                    <div class="panel-title">Stimulus</div>
+                    <div class="panel-sub">Paste reading text or upload an image screenshot</div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="tab-group">
+                <div class="tab-btn active" id="tab-text" onclick="toggleStimulus('text')">
+                    <i class="fas fa-align-left" style="font-size:11px;"></i> Text Input
+                </div>
+                <div class="tab-btn" id="tab-image" onclick="toggleStimulus('image')">
+                    <i class="fas fa-image" style="font-size:11px;"></i> Image Upload
+                </div>
+                <input type="radio" name="stimulusType" id="radio-text"  value="text"  checked style="display:none;">
+                <input type="radio" name="stimulusType" id="radio-image" value="image"        style="display:none;">
+            </div>
+
+            <div id="stimDiv">
+                <textarea id="stimulusTextarea" rows="6"
+                    placeholder="Paste your reading passage here...&#10;&#10;This text will serve as the stimulus from which the assessment item is generated."></textarea>
+            </div>
+
+            <div id="imageDiv" style="display:none;">
+                <label for="imageFile">
+                    <div class="drop-zone">
+                        <div class="drop-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <p><strong>Click to upload</strong> or drag & drop</p>
+                        <small>PNG, JPG, WEBP — screenshot of reading material</small>
+                    </div>
+                </label>
+                <input id="imageFile" type="file" style="display:none;" accept="image/*" onchange="previewImage(event)">
+
+                <div class="img-preview" id="imagePreview">
+                    <img id="imgPreviewSrc" alt="preview">
+                    <div>
+                        <div class="ok"><i class="fas fa-check-circle"></i> Image loaded</div>
+                        <div class="fn" id="fileName"></div>
+                    </div>
+                </div>
+
+                <div class="extract-box" id="extractionContainer" style="display:none;">
+                    <div class="extract-head">
+                        <div class="extract-label"><i class="fas fa-text-width"></i> Extracted Text</div>
+                        <div class="extract-status" id="extractionStatus">
+                            <svg class="spin" width="14" height="14" viewBox="0 0 14 14">
+                                <circle cx="7" cy="7" r="5.5" fill="none" stroke="#bae6fd" stroke-width="2"/>
+                                <path d="M7 1.5 A5.5 5.5 0 0 1 12.5 7" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Extracting...
+                        </div>
+                    </div>
+                    <textarea id="extractedText" rows="5"
+                        style="background:white; border-color:#c7d2fe; font-size:13.5px; line-height:1.7;"
+                        placeholder="Extracted text will appear here. You may edit before generating..."></textarea>
+                    <div class="extract-hint"><i class="fas fa-info-circle" style="color:var(--sky-500);"></i> This text will be sent as the stimulus context when generating.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KISI-KISI / INDICATOR PANEL -->
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-head-left">
+                <div class="panel-ico"><i class="fas fa-bullseye"></i></div>
+                <div>
+                    <div class="panel-title">Kisi-Kisi / Indicator</div>
+                    <div class="panel-sub">Tuliskan kisi-kisi atau indikator soal yang ingin dicapai</div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <textarea id="kisiKisi" rows="3"
+                placeholder="e.g., Siswa mampu mengidentifikasi rincian peristiwa dari teks secara tepat."></textarea>
+            <div class="hint">
+                <i class="fas fa-lightbulb" style="color:#f59e0b;"></i>
+                Sistem akan secara otomatis mencocokkan sub-level taksonomi Barrett yang paling relevan.
+            </div>
+        </div>
+    </div>
+
+    <!-- ITEM PARAMETERS PANEL -->
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-head-left">
+                <div class="panel-ico"><i class="fas fa-sliders-h"></i></div>
+                <div>
+                    <div class="panel-title">Item Parameters</div>
+                    <div class="panel-sub">Set cognitive level, language complexity, and item format</div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+
+            <div class="grid-2">
+                <div>
+                    <div class="lbl"><i class="fas fa-layer-group" style="color:var(--purple-500);font-size:12px;"></i> Language Level (CEFR)</div>
+                    <select id="cefrLevel">
+                        <option value="A1">A1 — Beginner</option>
+                        <option value="A2">A2 — Elementary</option>
+                        <option value="B1" selected>B1 — Intermediate</option>
+                        <option value="B2">B2 — Upper Intermediate</option>
+                        <option value="C1">C1 — Advanced</option>
+                        <option value="C2">C2 — Proficient</option>
+                    </select>
+                    <div class="hint">Controls vocabulary & grammar complexity.</div>
+                </div>
+
+                <div>
+                    <div class="lbl"><i class="fas fa-brain" style="color:var(--sky-500);font-size:12px;"></i> Cognitive Level (Barrett)</div>
+                    <select id="barrettLevel">
+                        <option value="Literal Comprehension">1. Literal Comprehension (Textual)</option>
+                        <option value="Reorganization">2. Reorganization (Textual)</option>
+                        <option value="Inferential Comprehension" selected>3. Inferential Comprehension</option>
+                        <option value="Evaluation">4. Evaluation</option>
+                        <option value="Appreciation">5. Appreciation</option>
+                    </select>
+                    <div class="hint">Choose the reading cognitive level.</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="field">
+                <div class="lbl">
+                    <i class="fas fa-list-ul" style="color:var(--purple-600);font-size:12px;"></i>
+                    Tipe Soal
+                    <span class="lbl-tag">Standard TKA</span>
+                </div>
+                <select id="itemType" onchange="updateDynamicOptions()">
+                    <option value="Single Choice">Pilihan Ganda Tunggal (MC)</option>
+                    <option value="Complex Choice">Pilihan Ganda Kompleks (MCMCA)</option>
+                    <option value="Category Matrix">Pilihan Ganda Kategori (MC Category Matrix)</option>
+                </select>
+            </div>
+
+            <div style="margin-top:16px;" id="dynamicOptionsContainer">
+
+                <div id="config-single" class="cfg-box">
+                    <div class="cfg-title">Answer Configuration</div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <label style="font-size:13px; font-weight:600; color:#334155; white-space:nowrap;">Jumlah Opsi</label>
+                        <select id="sc_numOptions" style="width:auto;">
+                            <option value="3">3 Opsi (A–C)</option>
+                            <option value="4">4 Opsi (A–D)</option>
+                            <option value="5" selected>5 Opsi (A–E)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="config-complex" class="cfg-box" style="display:none;">
+                    <div class="cfg-title">Complex Choice Configuration</div>
+                    <div class="grid-2">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Total Opsi</div>
+                            <select id="cm_totalOptions">
+                                <option value="4">4 Pernyataan</option>
+                                <option value="5" selected>5 Pernyataan</option>
+                                <option value="6">6 Pernyataan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Jumlah Benar</div>
+                            <select id="cm_correctCount">
+                                <option value="2" selected>2 Jawaban Benar</option>
+                                <option value="3">3 Jawaban Benar</option>
+                                <option value="All">Semua Benar</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="config-matrix" class="cfg-box" style="display:none;">
+                    <div class="cfg-title">Matrix Configuration</div>
+                    <div class="grid-2">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Jumlah Baris</div>
+                            <select id="mx_rows">
+                                <option value="3">3 Baris</option>
+                                <option value="4" selected>4 Baris</option>
+                                <option value="5">5 Baris</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Kategori (pisahkan /)</div>
+                            <input type="text" id="mx_category" placeholder="Fakta/Opini atau Ya/Tidak">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTON & LOADER -->
+    <div class="panel" style="padding: 20px;">
+        <button id="generateBtn" class="btn-gen">
+            <i class="fas fa-wand-magic-sparkles"></i> GENERATE ASSESSMENT ITEM
+        </button>
+        <div class="loading-row" id="loader">
+            <svg class="spin" width="30" height="30" viewBox="0 0 30 30">
+                <circle cx="15" cy="15" r="12" fill="none" stroke="#e0e7ff" stroke-width="3"/>
+                <path d="M15 3 A12 12 0 0 1 27 15" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div class="msg">
+                Crafting assessment item...
+                <small id="loaderSubText">Connecting to Netlify Functions & AI Engine...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULT CONTAINER -->
+    <div id="resultContainer" style="display:none;">
+        <div class="panel result-in">
+            <div class="panel-head">
+                <div class="panel-head-left">
+                    <div class="panel-ico"><i class="fas fa-file-lines"></i></div>
+                    <div>
+                        <div class="panel-title">Generated Assessment Item</div>
+                        <div class="panel-sub" id="providerNotice">Review and copy your assessment item below</div>
+                    </div>
+                </div>
+                <!-- TOOLBAR TOMBOL SALIN -->
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <button id="btnCopyQuestion" onclick="copyQuestionOnly(this)" class="btn-copy" title="Salin soal dan opsi saja (format siap pakai)">
+                        <i class="fas fa-copy"></i> Salin Soal Saja
+                    </button>
+                    <button id="btnCopyAll" onclick="copyAllComplete(this)" class="btn-copy btn-copy-primary" title="Salin paket lengkap: Soal, Opsi, Kunci, dan Pembahasan">
+                        <i class="fas fa-clipboard-check"></i> Salin Lengkap
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div id="outputSoal"></div>
+
+                <div style="margin-top:22px;padding-top:16px;border-top:1px solid #f1f5f9;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <button onclick="toggleKey()"
+                            style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;
+                                   color:var(--purple-600);background:none;border:none;cursor:pointer;
+                                   font-family:'Plus Jakarta Sans',sans-serif;">
+                            <i class="fas fa-key" style="font-size:12px;"></i>
+                            Show Answer Key & Explanation
+                            <i class="fas fa-chevron-down" id="keyChevron" style="font-size:11px;transition:transform 0.2s;"></i>
+                        </button>
+                        <button id="btnCopyKey" onclick="copyKeyOnly(this)" class="btn-copy" style="font-size:12px; padding:5px 11px;">
+                            <i class="fas fa-copy"></i> Salin Kunci Saja
+                        </button>
+                    </div>
+                    <div id="outputKey" style="display:none;" class="key-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="text-align:center;font-size:12.5px;color:var(--slate-400);padding-top:10px;">
+        Designed by <strong style="color:var(--purple-600);">MBELING</strong> &bull; Powered by Netlify Serverless AI
+    </div>
+
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast">
+    <i class="fas fa-check-circle" style="color:#4ade80;"></i>
+    <span id="toastMessage"></span>
+</div>
+
+<script>
+// =====================================================================
+// DATA STATE UNTUK COPY
+// =====================================================================
+let currentItemData = null;
+let currentItemType = "";
+let currentBarrett = "";
+let currentCefr = "";
+
+// =====================================================================
+// SYSTEM HEALTH CHECK
+// =====================================================================
+async function checkSystemHealth() {
+    const badge = document.getElementById('statusBadge');
+    try {
+        const res = await fetch('/api/health');
+        if (!res.ok) throw new Error("Status " + res.status);
+        const data = await res.json();
+        
+        if (data.status === "ready") {
+            badge.className = "status-pill ready";
+            const keys = [];
+            if (data.providers.gemini_key_1) keys.push("Gemini-1");
+            if (data.providers.gemini_key_2) keys.push("Gemini-2");
+            if (data.providers.groq) keys.push("Groq");
+            badge.innerHTML = `<i class="fas fa-shield-halved"></i> Ready (${keys.join(', ')})`;
+        } else {
+            badge.className = "status-pill warning";
+            badge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Env Vars Unset`;
+        }
+    } catch (err) {
+        console.warn("Health check error:", err);
+        badge.className = "status-pill warning";
+        badge.innerHTML = `<i class="fas fa-cloud"></i> Netlify Functions`;
+    }
+}
+checkSystemHealth();
+
+// =====================================================================
+// UI TOGGLES
+// =====================================================================
+function toggleStimulus(type) {
+    const isText = type === 'text';
+    document.getElementById('tab-text').className  = 'tab-btn' + (isText ? ' active' : '');
+    document.getElementById('tab-image').className = 'tab-btn' + (!isText ? ' active' : '');
+    document.getElementById('radio-text').checked  = isText;
+    document.getElementById('radio-image').checked = !isText;
+    document.getElementById('stimDiv').style.display   = isText ? 'block' : 'none';
+    document.getElementById('imageDiv').style.display  = isText ? 'none'  : 'block';
+}
+
+function updateDynamicOptions() {
+    const t = document.getElementById('itemType').value;
+    document.getElementById('config-single').style.display  = t === 'Single Choice'   ? 'block' : 'none';
+    document.getElementById('config-complex').style.display = t === 'Complex Choice'  ? 'block' : 'none';
+    document.getElementById('config-matrix').style.display  = t === 'Category Matrix' ? 'block' : 'none';
+}
+updateDynamicOptions();
+
+let keyVisible = false;
+function toggleKey() {
+    keyVisible = !keyVisible;
+    document.getElementById('outputKey').style.display    = keyVisible ? 'block' : 'none';
+    document.getElementById('keyChevron').style.transform = keyVisible ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+// =====================================================================
+// IMAGE PREVIEW + EXTRACT
+// =====================================================================
+async function previewImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('imgPreviewSrc').src = e.target.result;
+        document.getElementById('imagePreview').style.display = 'flex';
+        document.getElementById('fileName').textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+
+    // Extraction
+    const container = document.getElementById('extractionContainer');
+    const status    = document.getElementById('extractionStatus');
+    const ta        = document.getElementById('extractedText');
+
+    container.style.display = 'block';
+    ta.value        = '';
+    ta.disabled     = true;
+    ta.placeholder  = 'Extracting text from image via Netlify AI...';
+    status.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="#bae6fd" stroke-width="2"/><path d="M7 1.5 A5.5 5.5 0 0 1 12.5 7" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/></svg> Extracting...`;
+
+    try {
+        const b64 = await new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onloadend = () => {
+                const parts = r.result.split(',');
+                resolve(parts[1]);
+            };
+            r.onerror = reject;
+            r.readAsDataURL(file);
+        });
+
+        const res = await fetch('/api/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                imageBase64: b64,
+                mimeType: file.type || 'image/png'
+            })
+        });
+
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+            throw new Error(result.error || "Gagal ekstrak teks dari gambar.");
+        }
+
+        ta.value = result.extractedText;
+        ta.disabled = false;
+        ta.placeholder = '';
+        status.innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> <span style="color:#16a34a;font-weight:700;">Extracted via ${result.provider}</span>`;
+
+    } catch (err) {
+        ta.disabled    = false;
+        ta.placeholder = 'Extraction failed. Please type the text manually here...';
+        status.innerHTML = `<i class="fas fa-triangle-exclamation" style="color:#f59e0b;"></i> <span style="color:#b45309;">Failed — type manually</span>`;
+        console.error("Extraction error:", err);
+        showToast("OCR Error: " + err.message);
+    }
+}
+
+// =====================================================================
+// GENERATE ITEM
+// =====================================================================
+document.getElementById('generateBtn').addEventListener('click', async () => {
+    const kisiKisi     = document.getElementById('kisiKisi').value.trim();
+    const barrettLevel = document.getElementById('barrettLevel').value;
+    const cefrLevel    = document.getElementById('cefrLevel').value;
+    const itemType     = document.getElementById('itemType').value;
+    
+    const stimType     = document.querySelector('input[name="stimulusType"]:checked').value;
+    const textVal      = document.getElementById('stimulusTextarea').value.trim();
+    const imageFile    = document.getElementById('imageFile').files[0];
+    const extractedVal = document.getElementById('extractedText').value.trim();
+
+    if (!kisiKisi)                                       return showToast("Please enter the Kisi-Kisi / Indicator.");
+    if (stimType === 'text'  && !textVal)                return showToast("Please enter the stimulus text.");
+    if (stimType === 'image' && !imageFile)              return showToast("Please upload an image.");
+    if (stimType === 'image' && !extractedVal)           return showToast("Please wait for extraction or type the text manually.");
+
+    let dynamicParams = "";
+    if (itemType === 'Single Choice') {
+        const n = document.getElementById('sc_numOptions').value;
+        dynamicParams = `- Provide exactly ${n} options (A to ${String.fromCharCode(64+parseInt(n))}).`;
+    } else if (itemType === 'Complex Choice') {
+        const t = document.getElementById('cm_totalOptions').value;
+        const c = document.getElementById('cm_correctCount').value;
+        dynamicParams = `- Exactly ${t} total options.\n- STRICT: exactly ${c} correct answers.`;
+    } else if (itemType === 'Category Matrix') {
+        const rows     = document.getElementById('mx_rows').value;
+        const catInput = document.getElementById('mx_category').value || "True/False";
+        const cats     = catInput.split('/').map(c => c.trim());
+        if (cats.length < 2) return showToast("Minimal 2 kategori, pisahkan dengan /");
+        dynamicParams = `- Exactly ${rows} rows.\n- Headers: ${cats.map(c=>`"${c}"`).join(', ')}.`;
+    }
+
+    const btn           = document.getElementById('generateBtn');
+    const loader        = document.getElementById('loader');
+    const loaderSubText = document.getElementById('loaderSubText');
+    const resultBox     = document.getElementById('resultContainer');
+
+    btn.disabled    = true;
+    btn.innerHTML   = `<svg class="spin" width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/><path d="M10 2 A8 8 0 0 1 18 10" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg> Generating...`;
+    loader.style.display    = 'flex';
+    loaderSubText.textContent = "Processing via Netlify AI Engine (Gemini -> Groq failover)...";
+    resultBox.style.display = 'none';
+
+    const stimulusForPrompt = stimType === 'image' ? extractedVal : textVal;
+
+    try {
+        const res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                stimulus: stimulusForPrompt,
+                kisiKisi,
+                barrettLevel,
+                cefrLevel,
+                itemType,
+                dynamicParams
+            })
+        });
+
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+            throw new Error(json.error || "Gagal membuat butir soal asesmen.");
+        }
+
+        renderOutput(json.data, itemType, barrettLevel, cefrLevel, json.provider);
+        showToast(`Item generated successfully via ${json.provider}!`);
+
+    } catch (err) {
+        console.error("Generation Error:", err);
+        showToast("Error: " + err.message);
+    } finally {
+        btn.disabled  = false;
+        btn.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i> GENERATE ASSESSMENT ITEM`;
+        loader.style.display = 'none';
+    }
+});
+
+// =====================================================================
+// RENDER OUTPUT
+// =====================================================================
+function renderOutput(data, type, barrett, cefr, providerName) {
+    currentItemData = data;
+    currentItemType = type;
+    currentBarrett  = barrett;
+    currentCefr     = cefr;
+
+    const outSoal        = document.getElementById('outputSoal');
+    const outKey         = document.getElementById('outputKey');
+    const resultBox      = document.getElementById('resultContainer');
+    const providerNotice = document.getElementById('providerNotice');
+
+    providerNotice.innerHTML = `Generated via <strong style="color:var(--purple-600);">${providerName || 'AI Backend'}</strong> &bull; Review & copy below`;
+
+    const typeBadge = `background: var(--sky-50); color: var(--sky-600); border: 1px solid var(--sky-200);`;
+    const cefrBadge = `background: var(--purple-50); color: var(--purple-600); border: 1px solid var(--purple-200);`;
+    const barrettBadge = `background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;`;
+    const providerBadge = `background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;`;
+
+    let html = `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
+            <span class="bdg" style="${typeBadge}"><i class="fas fa-tag"></i> ${type}</span>
+            <span class="bdg" style="${cefrBadge}"><i class="fas fa-layer-group"></i> CEFR: ${cefr}</span>
+            <span class="bdg" style="${barrettBadge}"><i class="fas fa-brain"></i> ${barrett}</span>
+            <span class="bdg" style="${providerBadge}"><i class="fas fa-bolt"></i> ${providerName || 'AI Engine'}</span>
+        </div>
+        <p style="font-size:16.5px;font-weight:700;color:#0f172a;line-height:1.75;margin-bottom:20px;">${data.question_stem}</p>
+    `;
+
+    if (type === 'Single Choice') {
+        html += `<div style="display:flex;flex-direction:column;gap:10px;">`;
+        data.options?.forEach(opt => {
+            html += `<div class="opt-row"><div class="opt-lbl">${opt.label}</div><span>${opt.text}</span></div>`;
+        });
+        html += `</div>`;
+
+    } else if (type === 'Complex Choice') {
+        html += `<div style="font-size:13px;font-weight:700;color:var(--purple-600);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <i class="fas fa-check-double"></i> Select all correct answers
+        </div><div style="display:flex;flex-direction:column;gap:10px;">`;
+        data.options?.forEach(opt => {
+            html += `<div class="opt-row" style="border-color:#e9d5ff;">
+                <div class="opt-lbl">${opt.label}</div>
+                <span>${opt.text}</span>
+            </div>`;
+        });
+        html += `</div>`;
+
+    } else if (type === 'Category Matrix') {
+        const headers = data.matrix_headers || ["Statement","True","False"];
+        let th = `<th style="padding:12px 18px;text-align:left;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">${headers[0]}</th>`;
+        for (let i = 1; i < headers.length; i++) {
+            th += `<th style="padding:12px 18px;text-align:center;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:105px;">${headers[i]}</th>`;
+        }
+        let rows = '';
+        data.matrix_rows?.forEach((row, ri) => {
+            let tds = `<td style="padding:13px 18px;font-size:14px;font-weight:500;color:#1e293b;">${row.statement}</td>`;
+            for (let i = 1; i < headers.length; i++) {
+                tds += `<td style="padding:13px 18px;text-align:center;"><input type="radio" disabled style="width:17px;height:17px;accent-color:var(--purple-600);"></td>`;
+            }
+            rows += `<tr style="background:${ri%2===0?'white':'#fafbff'};border-bottom:1px solid #f1f5f9;">${tds}</tr>`;
+        });
+        html += `<div style="overflow:hidden;border:1.5px solid #e2e8f0;border-radius:12px;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead style="background:linear-gradient(90deg, #f0f9ff, #faf5ff);"><tr>${th}</tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+    }
+
+    outSoal.innerHTML = html;
+
+    // Key
+    let keyHTML = '';
+    if (type === 'Category Matrix') {
+        keyHTML += `<div style="font-size:14.5px;font-weight:800;color:var(--purple-600);margin-bottom:12px;"><i class="fas fa-check-circle" style="color:var(--purple-500);"></i> Correct Responses</div>`;
+        keyHTML += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">`;
+        data.matrix_rows?.forEach(r => {
+            keyHTML += `<div style="display:flex;align-items:center;gap:10px;font-size:14px;padding:8px 12px;background:white;border-radius:9px;border:1px solid #e9d5ff;">
+                <i class="fas fa-circle-check" style="color:var(--purple-500);font-size:13px;"></i>
+                <span style="color:#334155;flex:1;">${r.statement}</span>
+                <i class="fas fa-arrow-right" style="color:#94a3b8;font-size:10px;"></i>
+                <span style="font-weight:800;color:var(--purple-600);">${r.answer}</span>
+            </div>`;
+        });
+        keyHTML += `</div>`;
+    } else {
+        keyHTML += `<div style="display:inline-flex;align-items:center;gap:9px;background:white;border:2px solid var(--purple-200);border-radius:10px;padding:9px 18px;margin-bottom:16px;box-shadow:0 2px 6px rgba(168,85,247,0.06);">
+            <i class="fas fa-circle-check" style="color:var(--purple-500);font-size:14px;"></i>
+            <span style="font-size:15px;font-weight:800;color:var(--purple-600);">Correct Answer: ${data.correct_answer}</span>
+        </div>`;
+    }
+
+    keyHTML += `<div>
+        <div style="font-size:13px;font-weight:700;color:var(--purple-600);margin-bottom:7px;"><i class="fas fa-comment-dots"></i> Explanation</div>
+        <p style="font-size:14px;color:#334155;line-height:1.8;">${data.explanation}</p>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e9d5ff;font-size:12.5px;color:var(--purple-600);font-style:italic;">
+        <i class="fas fa-microscope" style="color:var(--sky-500);"></i> ${data.stimulus_analysis}
+    </div>`;
+
+    outKey.innerHTML        = keyHTML;
+    outKey.style.display    = 'none';
+    keyVisible              = false;
+    document.getElementById('keyChevron').style.transform = 'rotate(0deg)';
+    resultBox.style.display = 'block';
+    resultBox.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// =====================================================================
+// FORMATTER UNTUK SALIN SOAL
+// =====================================================================
+function getFormattedQuestionText() {
+    if (!currentItemData) return "";
+    let text = `${currentItemData.question_stem}\n\n`;
+    if (currentItemType === 'Single Choice' || currentItemType === 'Complex Choice') {
+        currentItemData.options?.forEach(opt => {
+            text += `${opt.label}. ${opt.text}\n`;
+        });
+    } else if (currentItemType === 'Category Matrix') {
+        const headers = currentItemData.matrix_headers || ["Pernyataan", "Benar", "Salah"];
+        text += `[Kategori Pilihan: ${headers.slice(1).join(' / ')}]\n`;
+        currentItemData.matrix_rows?.forEach((row, i) => {
+            text += `${i + 1}. ${row.statement}\n`;
+        });
+    }
+    return text.trim();
+}
+
+function getFormattedKeyText() {
+    if (!currentItemData) return "";
+    let text = `KUNCI JAWABAN:\n`;
+    if (currentItemType === 'Category Matrix') {
+        currentItemData.matrix_rows?.forEach((row, i) => {
+            text += `${i + 1}. ${row.statement} -> ${row.answer}\n`;
+        });
+    } else {
+        text += `Jawaban: ${currentItemData.correct_answer}\n`;
+    }
+    text += `\nPEMBAHASAN:\n${currentItemData.explanation}\n`;
+    if (currentItemData.stimulus_analysis) {
+        text += `\nANALISIS STIMULUS & BARRETT:\n${currentItemData.stimulus_analysis}\n`;
+    }
+    return text.trim();
+}
+
+function getFormattedAllText() {
+    if (!currentItemData) return "";
+    let text = `=== BUTIR SOAL ASESMEN ===\n`;
+    text += `Tipe Soal : ${currentItemType}\n`;
+    text += `CEFR Level: ${currentCefr}\n`;
+    text += `Barrett   : ${currentBarrett}\n\n`;
+    text += `SOAL:\n${getFormattedQuestionText()}\n\n`;
+    text += `${getFormattedKeyText()}`;
+    return text.trim();
+}
+
+// =====================================================================
+// CLIPBOARD FUNCTIONS
+// =====================================================================
+async function copyTextToClipboard(text, btnElement, successMsg = "Tersalin ke clipboard!") {
+    if (!text) {
+        showToast("Belum ada soal yang dapat disalin.");
+        return;
+    }
+
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // Fallback untuk browser atau lingkungan non-HTTPS
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-999999px";
+            ta.style.top = "-999999px";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+        }
+
+        showToast(successMsg);
+
+        // Feedback animasi visual pada tombol
+        if (btnElement) {
+            const originalHTML = btnElement.innerHTML;
+            btnElement.innerHTML = `<i class="fas fa-check" style="color:#16a34a;"></i> Tersalin!`;
+            btnElement.style.borderColor = "#86efac";
+            btnElement.style.color = "#166534";
+            btnElement.style.background = "#f0fdf4";
+            setTimeout(() => {
+                btnElement.innerHTML = originalHTML;
+                btnElement.style.borderColor = "";
+                btnElement.style.color = "";
+                btnElement.style.background = "";
+            }, 2000);
+        }
+    } catch (err) {
+        console.error("Gagal menyalin:", err);
+        showToast("Gagal menyalin teks.");
+    }
+}
+
+function copyQuestionOnly(btn) {
+    const text = getFormattedQuestionText();
+    copyTextToClipboard(text, btn, "Soal dan opsi berhasil disalin!");
+}
+
+function copyAllComplete(btn) {
+    const text = getFormattedAllText();
+    copyTextToClipboard(text, btn, "Paket soal & kunci lengkap berhasil disalin!");
+}
+
+function copyKeyOnly(btn) {
+    const text = getFormattedKeyText();
+    copyTextToClipboard(text, btn, "Kunci & pembahasan berhasil disalin!");
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMessage').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>

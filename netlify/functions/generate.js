@@ -107,7 +107,16 @@ OUTPUT FORMAT (JSON ONLY, no other text):
 STIMULUS: "${stimulus}"`;
 
   const geminiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-  const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+
+  // Daftar prioritas model Groq (Qwen diprioritaskan)
+  const candidateGroqModels = [
+    process.env.GROQ_MODEL,
+    "qwen/qwen3.8-27b",
+    "qwen/qwen3.6-27b",
+    "qwen-2.5-32b",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant"
+  ].filter(Boolean);
 
   const attempts = [
     {
@@ -123,10 +132,10 @@ STIMULUS: "${stimulus}"`;
       model: geminiModel
     },
     {
-      name: "Groq Llama 3.3 (Fallback)",
+      name: "Groq Qwen (Fallback)",
       type: "groq",
       key: process.env.GROQ_API_KEY,
-      model: groqModel
+      models: candidateGroqModels
     }
   ];
 
@@ -170,49 +179,73 @@ STIMULUS: "${stimulus}"`;
           })
         };
       } else if (attempt.type === "groq") {
-        const url = "https://api.groq.com/openai/v1/chat/completions";
-        const payload = {
-          model: attempt.model,
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert English assessment developer. Always reply with valid JSON only."
-            },
-            {
-              role: "user",
-              content: promptText
+        let lastGroqError = null;
+        let successResult = null;
+
+        // Mencoba daftar model Groq (Qwen -> varian lain) jika terjadi deprecation
+        for (const groqModelId of attempt.models) {
+          try {
+            const url = "https://api.groq.com/openai/v1/chat/completions";
+            const payload = {
+              model: groqModelId,
+              response_format: { type: "json_object" },
+              messages: [
+                {
+                  role: "system",
+                  content: "You are an expert English assessment developer. Always reply with valid JSON only."
+                },
+                {
+                  role: "user",
+                  content: promptText
+                }
+              ]
+            };
+
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${attempt.key}`
+              },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+              const errMsg = data.error?.message || `HTTP ${res.status}`;
+              // Jika model tidak ditemukan atau sudah decommissioned, coba kandidat model berikutnya
+              if (errMsg.includes("decommissioned") || errMsg.includes("not found") || res.status === 404) {
+                console.warn(`[Groq Model Deprecated] ${groqModelId} tidak aktif. Mencoba model Groq berikutnya...`);
+                lastGroqError = new Error(`${groqModelId}: ${errMsg}`);
+                continue;
+              }
+              throw new Error(errMsg);
             }
-          ]
-        };
 
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${attempt.key}`
-          },
-          body: JSON.stringify(payload)
-        });
+            const rawResult = data.choices?.[0]?.message?.content;
+            const parsed = sanitizeAndParseJSON(rawResult);
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error?.message || `HTTP ${res.status}`);
+            successResult = {
+              statusCode: 200,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                success: true,
+                provider: `Groq (${groqModelId})`,
+                model: groqModelId,
+                data: parsed
+              })
+            };
+            break;
+          } catch (modelErr) {
+            lastGroqError = modelErr;
+          }
         }
 
-        const rawResult = data.choices?.[0]?.message?.content;
-        const parsed = sanitizeAndParseJSON(rawResult);
-
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            success: true,
-            provider: attempt.name,
-            model: attempt.model,
-            data: parsed
-          })
-        };
+        if (successResult) {
+          return successResult;
+        } else {
+          throw lastGroqError || new Error("Semua model Groq gagal dijalankan.");
+        }
       }
     } catch (err) {
       console.warn(`[Generate Failover] ${attempt.name} gagal: ${err.message}`);

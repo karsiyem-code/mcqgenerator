@@ -30,7 +30,12 @@ exports.handler = async (event) => {
   const ocrPrompt = "Extract ALL text from this image accurately. Return ONLY the raw extracted text, preserving structure and paragraphs. No explanations, no markdown.";
 
   const geminiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-  const groqVisionModel = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview";
+  const candidateVisionModels = [
+    process.env.GROQ_VISION_MODEL,
+    "qwen/qwen3.8-27b",
+    "llama-3.2-11b-vision-preview",
+    "llama-3.2-90b-vision-preview"
+  ].filter(Boolean);
 
   const attempts = [
     {
@@ -49,7 +54,7 @@ exports.handler = async (event) => {
       name: "Groq Vision (Fallback)",
       type: "groq",
       key: process.env.GROQ_API_KEY,
-      model: groqVisionModel
+      models: candidateVisionModels
     }
   ];
 
@@ -96,53 +101,69 @@ exports.handler = async (event) => {
           throw new Error("Respons kosong dari Gemini");
         }
       } else if (attempt.type === "groq") {
-        const url = "https://api.groq.com/openai/v1/chat/completions";
-        const payload = {
-          model: attempt.model,
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: ocrPrompt },
+        let lastGroqError = null;
+
+        for (const visionModelId of attempt.models) {
+          try {
+            const url = "https://api.groq.com/openai/v1/chat/completions";
+            const payload = {
+              model: visionModelId,
+              messages: [
                 {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${mimeType};base64,${imageBase64}`
-                  }
+                  role: "user",
+                  content: [
+                    { type: "text", text: ocrPrompt },
+                    {
+                      type: "image_url",
+                      image_url: {
+                        url: `data:${mimeType};base64,${imageBase64}`
+                      }
+                    }
+                  ]
                 }
               ]
+            };
+
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${attempt.key}`
+              },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+              const errMsg = data.error?.message || `HTTP ${res.status}`;
+              if (errMsg.includes("decommissioned") || errMsg.includes("not found") || res.status === 404) {
+                console.warn(`[Groq Vision Deprecated] ${visionModelId} tidak aktif. Mencoba model berikutnya...`);
+                lastGroqError = new Error(`${visionModelId}: ${errMsg}`);
+                continue;
+              }
+              throw new Error(errMsg);
             }
-          ]
-        };
 
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${attempt.key}`
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error?.message || `HTTP ${res.status}`);
+            const text = data.choices?.[0]?.message?.content;
+            if (text && text.trim()) {
+              return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  success: true,
+                  provider: `Groq Vision (${visionModelId})`,
+                  extractedText: text.trim()
+                })
+              };
+            } else {
+              throw new Error("Respons kosong dari Groq Vision");
+            }
+          } catch (modelErr) {
+            lastGroqError = modelErr;
+          }
         }
 
-        const text = data.choices?.[0]?.message?.content;
-        if (text && text.trim()) {
-          return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              success: true,
-              provider: attempt.name,
-              extractedText: text.trim()
-            })
-          };
-        } else {
-          throw new Error("Respons kosong dari Groq Vision");
-        }
+        if (lastGroqError) throw lastGroqError;
       }
     } catch (err) {
       console.warn(`[OCR Failover] ${attempt.name} gagal: ${err.message}`);

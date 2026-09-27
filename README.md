@@ -32,10 +32,10 @@ Masukkan kunci-kunci berikut di **Netlify Dashboard**:
 |---|---|---|
 | `GEMINI_API_KEY_1` | Ya | API Key Google Gemini Utama |
 | `GEMINI_API_KEY_2` | Ya | API Key Google Gemini Cadangan / Rotasi |
-| `GROQ_API_KEY` | Ya | API Key Groq untuk failover (Llama 3.3 70B & Vision) |
+| `GROQ_API_KEY` | Ya | API Key Groq untuk failover (Qwen Series) |
 | `GEMINI_MODEL` | Tidak | Default: `gemini-2.0-flash` (atau `gemini-1.5-flash`) |
-| `GROQ_MODEL` | Tidak | Default: `llama-3.3-70b-versatile` |
-| `GROQ_VISION_MODEL` | Tidak | Default: `llama-3.2-11b-vision-preview` |
+| `GROQ_MODEL` | Tidak | Default: `qwen/qwen3.8-27b` (atau `qwen-2.5-32b`) |
+| `GROQ_VISION_MODEL` | Tidak | Default: `qwen/qwen3.8-27b` (Multimodal/OCR) |
 
 ---
 

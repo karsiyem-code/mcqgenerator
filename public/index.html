@@ -389,6 +389,54 @@
             color: var(--purple-700);
         }
 
+        /* ── CLEAR & START FRESH BUTTONS ── */
+        .btn-clear {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1.5px solid var(--slate-200);
+            color: var(--slate-500);
+            cursor: pointer;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.18s ease;
+        }
+        .btn-clear:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-start-fresh {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 12px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            color: var(--slate-600);
+            cursor: pointer;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            letter-spacing: 0.3px;
+        }
+        .btn-start-fresh:hover {
+            background: #ffffff;
+            border-color: var(--purple-400);
+            color: var(--purple-600);
+            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.15);
+            transform: translateY(-1px);
+        }
+
         /* ── LOADERS ── */
         @keyframes rot { to { transform: rotate(360deg); } }
         .spin { animation: rot 0.75s linear infinite; display: inline-block; }
@@ -496,7 +544,7 @@
             <i class="fas fa-sparkles"></i> Assessment Generator 2.0
         </div>
         <div class="page-title">Generate Assessment Item</div>
-        <div class="page-desc">CEFR & Barrett Taxonomy Alignment &bull; Multi-Key Gemini with Groq Fallback</div>
+        <div class="page-desc">CEFR & Barrett Taxonomy Alignment</div>
     </div>
 
     <!-- STIMULUS PANEL -->
@@ -509,6 +557,9 @@
                     <div class="panel-sub">Paste reading text or upload an image screenshot</div>
                 </div>
             </div>
+            <button type="button" onclick="clearStimulus()" class="btn-clear" title="Kosongkan teks dan gambar stimulus">
+                <i class="fas fa-eraser"></i> Clear
+            </button>
         </div>
         <div class="panel-body">
             <div class="tab-group">
@@ -575,6 +626,9 @@
                     <div class="panel-sub">Tuliskan kisi-kisi atau indikator soal yang ingin dicapai</div>
                 </div>
             </div>
+            <button type="button" onclick="clearIndicator()" class="btn-clear" title="Kosongkan teks indikator">
+                <i class="fas fa-eraser"></i> Clear
+            </button>
         </div>
         <div class="panel-body">
             <textarea id="kisiKisi" rows="3"
@@ -760,6 +814,13 @@
         </div>
     </div>
 
+    <!-- START FRESH ACTION -->
+    <div style="text-align: center; margin-top: 14px; margin-bottom: 10px;">
+        <button type="button" onclick="startFresh()" class="btn-start-fresh" title="Reset semua input dan hasil ke kondisi awal">
+            <i class="fas fa-rotate-left"></i> START FRESH
+        </button>
+    </div>
+
     <!-- FOOTER -->
     <div style="text-align:center;font-size:12.5px;color:var(--slate-400);padding-top:10px;">
         Designed by <strong style="color:var(--purple-600);">MBELING</strong> &bull; Powered by Netlify Serverless AI
@@ -894,7 +955,7 @@ async function previewImage(event) {
         ta.value = result.extractedText;
         ta.disabled = false;
         ta.placeholder = '';
-        status.innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> <span style="color:#16a34a;font-weight:700;">Extracted via ${result.provider}</span>`;
+        status.innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> <span style="color:#16a34a;font-weight:700;">Extracted successfully</span>`;
 
     } catch (err) {
         ta.disabled    = false;
@@ -948,7 +1009,7 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     btn.disabled    = true;
     btn.innerHTML   = `<svg class="spin" width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/><path d="M10 2 A8 8 0 0 1 18 10" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg> Generating...`;
     loader.style.display    = 'flex';
-    loaderSubText.textContent = "Processing via Netlify AI Engine (Gemini -> Groq failover)...";
+    loaderSubText.textContent = "Crafting your assessment item...";
     resultBox.style.display = 'none';
 
     const stimulusForPrompt = stimType === 'image' ? extractedVal : textVal;
@@ -973,8 +1034,8 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
             throw new Error(json.error || "Gagal membuat butir soal asesmen.");
         }
 
-        renderOutput(json.data, itemType, barrettLevel, cefrLevel, json.provider);
-        showToast(`Item generated successfully via ${json.provider}!`);
+        renderOutput(json.data, itemType, barrettLevel, cefrLevel);
+        showToast("Item generated successfully!");
 
     } catch (err) {
         console.error("Generation Error:", err);
@@ -989,7 +1050,7 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
 // =====================================================================
 // RENDER OUTPUT
 // =====================================================================
-function renderOutput(data, type, barrett, cefr, providerName) {
+function renderOutput(data, type, barrett, cefr) {
     currentItemData = data;
     currentItemType = type;
     currentBarrett  = barrett;
@@ -1000,19 +1061,17 @@ function renderOutput(data, type, barrett, cefr, providerName) {
     const resultBox      = document.getElementById('resultContainer');
     const providerNotice = document.getElementById('providerNotice');
 
-    providerNotice.innerHTML = `Generated via <strong style="color:var(--purple-600);">${providerName || 'AI Backend'}</strong> &bull; Review & copy below`;
+    providerNotice.innerHTML = `Review and copy your assessment item below`;
 
     const typeBadge = `background: var(--sky-50); color: var(--sky-600); border: 1px solid var(--sky-200);`;
     const cefrBadge = `background: var(--purple-50); color: var(--purple-600); border: 1px solid var(--purple-200);`;
     const barrettBadge = `background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;`;
-    const providerBadge = `background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;`;
 
     let html = `
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
             <span class="bdg" style="${typeBadge}"><i class="fas fa-tag"></i> ${type}</span>
             <span class="bdg" style="${cefrBadge}"><i class="fas fa-layer-group"></i> CEFR: ${cefr}</span>
             <span class="bdg" style="${barrettBadge}"><i class="fas fa-brain"></i> ${barrett}</span>
-            <span class="bdg" style="${providerBadge}"><i class="fas fa-bolt"></i> ${providerName || 'AI Engine'}</span>
         </div>
         <p style="font-size:16.5px;font-weight:700;color:#0f172a;line-height:1.75;margin-bottom:20px;">${data.question_stem}</p>
     `;
@@ -1213,6 +1272,61 @@ function showToast(msg) {
     document.getElementById('toastMessage').textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// =====================================================================
+// CLEAR & RESET FUNCTIONS
+// =====================================================================
+function clearStimulus() {
+    document.getElementById('stimulusTextarea').value = '';
+    const fileInput = document.getElementById('imageFile');
+    if (fileInput) fileInput.value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imgPreviewSrc').src = '';
+    document.getElementById('fileName').textContent = '';
+    document.getElementById('extractedText').value = '';
+    document.getElementById('extractionContainer').style.display = 'none';
+    showToast("Stimulus dibersihkan.");
+}
+
+function clearIndicator() {
+    const el = document.getElementById('kisiKisi');
+    el.value = '';
+    el.focus();
+    showToast("Indikator dibersihkan.");
+}
+
+function startFresh() {
+    // 1. Bersihkan Stimulus & Indikator
+    clearStimulus();
+    document.getElementById('kisiKisi').value = '';
+
+    // 2. Kembalikan tab stimulus ke Teks
+    toggleStimulus('text');
+
+    // 3. Kembalikan parameter ke default
+    document.getElementById('cefrLevel').value = 'B1';
+    document.getElementById('barrettLevel').value = 'Inferential Comprehension';
+    document.getElementById('itemType').value = 'Single Choice';
+    document.getElementById('sc_numOptions').value = '5';
+    document.getElementById('cm_totalOptions').value = '5';
+    document.getElementById('cm_correctCount').value = '2';
+    document.getElementById('mx_rows').value = '4';
+    document.getElementById('mx_category').value = '';
+    updateDynamicOptions();
+
+    // 4. Sembunyikan hasil & kunci
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('outputSoal').innerHTML = '';
+    document.getElementById('outputKey').innerHTML = '';
+    document.getElementById('outputKey').style.display = 'none';
+    keyVisible = false;
+    document.getElementById('keyChevron').style.transform = 'rotate(0deg)';
+    currentItemData = null;
+
+    // 5. Scroll halus ke atas
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast("Aplikasi telah direset ke awal.");
 }
 </script>
 </body>
